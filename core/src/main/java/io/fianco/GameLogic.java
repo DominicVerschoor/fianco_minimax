@@ -1,26 +1,50 @@
 package io.fianco;
 
+import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.utils.Null;
+
+import io.fianco.Bots.*;
 
 public class GameLogic {
     private int[][] board;
     private int currentPlayer;
     private boolean pieceSelected = false;
     private int selectedRow = -1, selectedCol = -1;
+    private boolean gameOver = false;
+
+    private Bot bot;
 
     public GameLogic(int[][] board) {
         this.board = board;
         this.currentPlayer = 1;
+        this.bot = new RandomBot();
     }
 
     public void handleInput() {
+        if (this.bot != null) {
+            // Bot's turn
+            if (currentPlayer == -1) {
+                int[] botMove = bot.makeBotMove(board, currentPlayer);
+                if (botMove != null) {
+                    makeMove(botMove[0], botMove[1], botMove[2], botMove[3]);
+                    currentPlayer = -currentPlayer; // Switch to player's turn
+                }
+            }
+        }
         if (Gdx.input.justTouched()) {
             int mouseX = Gdx.input.getX();
             int mouseY = Gdx.input.getY();
-            int clickedCol = mouseX / Main.TILE_SIZE;
-            int clickedRow = (Gdx.graphics.getHeight() - mouseY) / Main.TILE_SIZE;
+            int clickedCol = mouseX / GameScreen.TILE_SIZE;
+            int clickedRow = (Gdx.graphics.getHeight() - mouseY) / GameScreen.TILE_SIZE;
 
-            if (clickedRow >= 0 && clickedRow < Main.BOARD_SIZE && clickedCol >= 0 && clickedCol < Main.BOARD_SIZE) {
+            if (gameOver) {
+                System.out.println("Player: " + -currentPlayer + " WINS!");
+                ((Game) Gdx.app.getApplicationListener()).setScreen(new GameOver(-currentPlayer));
+            }
+
+            if (clickedRow >= 0 && clickedRow < GameScreen.BOARD_SIZE && clickedCol >= 0
+                    && clickedCol < GameScreen.BOARD_SIZE) {
                 System.out.println("ROW: " + clickedRow + " COL: " + clickedCol);
                 if (!pieceSelected) {
                     // First click: select a piece
@@ -37,15 +61,16 @@ public class GameLogic {
                         board[selectedRow][selectedCol] = 0; // Clear the original position
 
                         handleCapture(selectedRow, selectedCol, clickedRow, clickedCol);
-
-                        if (isGameOver(clickedRow)) {
-                            System.out.println("Player: " + currentPlayer + " WINS!");
-                        }
-
                         // End the turn and switch players
                         currentPlayer = -currentPlayer;
                     }
-                    pieceSelected = false;
+                    if (board[clickedRow][clickedCol] == currentPlayer) {
+                        selectedRow = clickedRow;
+                        selectedCol = clickedCol;
+                        pieceSelected = true;
+                    } else {
+                        pieceSelected = false;
+                    }
                 }
             }
         }
@@ -88,8 +113,8 @@ public class GameLogic {
     }
 
     private boolean hasCaptureAvailable() {
-        for (int row = 0; row < Main.BOARD_SIZE; row++) {
-            for (int col = 0; col < Main.BOARD_SIZE; col++) {
+        for (int row = 0; row < GameScreen.BOARD_SIZE; row++) {
+            for (int col = 0; col < GameScreen.BOARD_SIZE; col++) {
                 if (board[row][col] == currentPlayer) {
                     if (canCapture(row, col)) {
                         return true; // If any piece can capture, return true
@@ -119,7 +144,7 @@ public class GameLogic {
 
     private boolean isValidCapture(int startRow, int startCol, int middleRow, int middleCol, int endRow, int endCol) {
         // Check bounds
-        if (endRow < 0 || endRow >= Main.BOARD_SIZE || endCol < 0 || endCol >= Main.BOARD_SIZE)
+        if (endRow < 0 || endRow >= GameScreen.BOARD_SIZE || endCol < 0 || endCol >= GameScreen.BOARD_SIZE)
             return false;
 
         // Check that there is an opponent's piece to capture
@@ -139,11 +164,21 @@ public class GameLogic {
         }
     }
 
-    private boolean isGameOver(int endRow) {
-        if (endRow == 0 || endRow == Main.BOARD_SIZE - 1) {
-            return true;
-        }
+    private void makeMove(int startRow, int startCol, int endRow, int endCol) {
+        // Move the piece
+        board[endRow][endCol] = board[startRow][startCol];
+        board[startRow][startCol] = 0; // Clear the original position
 
-        return false;
+        if (endRow == 8 || endRow == 0)
+        {System.out.println(endRow);}
+        handleCapture(startRow, startCol, endRow, endCol);
+
+        isGameOver(endRow);
+    }
+
+    private void isGameOver(int endRow) {
+        if (endRow == 0 || endRow == GameScreen.BOARD_SIZE - 1) {
+            this.gameOver = true;
+        }
     }
 }
