@@ -22,6 +22,11 @@ public class GameLogic {
     }
 
     public void handleInput() {
+        if (this.gameOver) {
+            System.out.println("Player: " + -currentPlayer + " WINS!");
+            ((Game) Gdx.app.getApplicationListener()).setScreen(new GameOver(-currentPlayer));
+        }
+
         if (this.bot != null) {
             // Bot's turn
             if (currentPlayer == -1) {
@@ -38,11 +43,6 @@ public class GameLogic {
             int clickedCol = mouseX / GameScreen.TILE_SIZE;
             int clickedRow = (Gdx.graphics.getHeight() - mouseY) / GameScreen.TILE_SIZE;
 
-            if (gameOver) {
-                System.out.println("Player: " + -currentPlayer + " WINS!");
-                ((Game) Gdx.app.getApplicationListener()).setScreen(new GameOver(-currentPlayer));
-            }
-
             if (clickedRow >= 0 && clickedRow < GameScreen.BOARD_SIZE && clickedCol >= 0
                     && clickedCol < GameScreen.BOARD_SIZE) {
                 System.out.println("ROW: " + clickedRow + " COL: " + clickedCol);
@@ -57,10 +57,8 @@ public class GameLogic {
                     // Second click: try to move the piece
                     if (isValidMove(selectedRow, selectedCol, clickedRow, clickedCol)) {
                         // Move the piece
-                        board[clickedRow][clickedCol] = board[selectedRow][selectedCol];
-                        board[selectedRow][selectedCol] = 0; // Clear the original position
-
-                        handleCapture(selectedRow, selectedCol, clickedRow, clickedCol);
+                        makeMove(selectedRow,selectedCol, clickedRow, clickedCol);
+                        
                         // End the turn and switch players
                         currentPlayer = -currentPlayer;
                     }
@@ -169,15 +167,14 @@ public class GameLogic {
         board[endRow][endCol] = board[startRow][startCol];
         board[startRow][startCol] = 0; // Clear the original position
 
-        if (endRow == 8 || endRow == 0)
-        {System.out.println(endRow);}
         handleCapture(startRow, startCol, endRow, endCol);
 
         isGameOver(endRow);
     }
 
     private void isGameOver(int endRow) {
-        if (endRow == 0 || endRow == GameScreen.BOARD_SIZE - 1) {
+        if ((endRow == 0 && currentPlayer == -1) ||
+                (currentPlayer == 1 && endRow == GameScreen.BOARD_SIZE - 1)) {
             this.gameOver = true;
         }
     }

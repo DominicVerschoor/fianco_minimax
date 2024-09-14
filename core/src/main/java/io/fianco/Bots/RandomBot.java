@@ -12,9 +12,6 @@ public class RandomBot extends Bot {
     public int[] makeBotMove(int[][] board, int currentPlayer) {
         List<int[]> validMoves = getMoves(board, currentPlayer);
         if (!validMoves.isEmpty()) {
-            if (validMoves.get(random.nextInt(validMoves.size()))){
-                System.out.println("WTF");
-            }
             return validMoves.get(random.nextInt(validMoves.size())); // Choose a random valid move
         }
         return null; // No valid moves
