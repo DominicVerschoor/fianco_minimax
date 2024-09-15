@@ -1,24 +1,29 @@
 package io.fianco;
 
+import java.util.ArrayList;
+import java.util.List;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.utils.Null;
 
 import io.fianco.Bots.*;
 
 public class GameLogic {
+    private List<int[][]> history;
     private int[][] board;
     private int currentPlayer;
     private boolean pieceSelected = false;
     private int selectedRow = -1, selectedCol = -1;
     private boolean gameOver = false;
+    private Player player1, player2;
 
-    private Bot bot;
-
-    public GameLogic(int[][] board) {
+    public GameLogic(int[][] board, boolean isHuman1, boolean isHuman2) {
         this.board = board;
         this.currentPlayer = 1;
-        this.bot = new RandomBot();
+        this.history = new ArrayList<int[][]>();
+        this.history.add(board);
+
+        this.player1 = isHuman1 ? new HumanPlayer() : new BotPlayer();
+        this.player2 = isHuman2 ? new HumanPlayer() : new BotPlayer();
     }
 
     public void handleInput() {
@@ -27,51 +32,12 @@ public class GameLogic {
             ((Game) Gdx.app.getApplicationListener()).setScreen(new GameOver(-currentPlayer));
         }
 
-        if (this.bot != null) {
-            // Bot's turn
-            if (currentPlayer == -1) {
-                int[] botMove = bot.makeBotMove(board, currentPlayer);
-                if (botMove != null) {
-                    makeMove(botMove[0], botMove[1], botMove[2], botMove[3]);
-                    currentPlayer = -currentPlayer; // Switch to player's turn
-                }
-            }
-        }
-        if (Gdx.input.justTouched()) {
-            int mouseX = Gdx.input.getX();
-            int mouseY = Gdx.input.getY();
-            int clickedCol = mouseX / GameScreen.TILE_SIZE;
-            int clickedRow = (Gdx.graphics.getHeight() - mouseY) / GameScreen.TILE_SIZE;
+        getCurrentPlayer().takeTurn(this);
+        history.add(board);
+    }
 
-            if (clickedRow >= 0 && clickedRow < GameScreen.BOARD_SIZE && clickedCol >= 0
-                    && clickedCol < GameScreen.BOARD_SIZE) {
-                System.out.println("ROW: " + clickedRow + " COL: " + clickedCol);
-                if (!pieceSelected) {
-                    // First click: select a piece
-                    if (board[clickedRow][clickedCol] == currentPlayer) {
-                        selectedRow = clickedRow;
-                        selectedCol = clickedCol;
-                        pieceSelected = true;
-                    }
-                } else {
-                    // Second click: try to move the piece
-                    if (isValidMove(selectedRow, selectedCol, clickedRow, clickedCol)) {
-                        // Move the piece
-                        makeMove(selectedRow,selectedCol, clickedRow, clickedCol);
-                        
-                        // End the turn and switch players
-                        currentPlayer = -currentPlayer;
-                    }
-                    if (board[clickedRow][clickedCol] == currentPlayer) {
-                        selectedRow = clickedRow;
-                        selectedCol = clickedCol;
-                        pieceSelected = true;
-                    } else {
-                        pieceSelected = false;
-                    }
-                }
-            }
-        }
+    private Player getCurrentPlayer() {
+        return currentPlayer == 1 ? player1 : player2;
     }
 
     private boolean isValidMove(int startRow, int startCol, int endRow, int endCol) {
@@ -176,6 +142,74 @@ public class GameLogic {
         if ((endRow == 0 && currentPlayer == -1) ||
                 (currentPlayer == 1 && endRow == GameScreen.BOARD_SIZE - 1)) {
             this.gameOver = true;
+        }
+    }
+
+
+    public interface Player {
+        boolean isHuman();
+        void takeTurn(GameLogic game);
+    }
+
+    public class HumanPlayer implements Player {
+        @Override
+        public boolean isHuman() {
+            return true;
+        }
+
+        @Override
+        public void takeTurn(GameLogic game) {
+            if (Gdx.input.justTouched()) {
+                int mouseX = Gdx.input.getX();
+                int mouseY = Gdx.input.getY();
+                int clickedCol = mouseX / GameScreen.TILE_SIZE;
+                int clickedRow = (Gdx.graphics.getHeight() - mouseY) / GameScreen.TILE_SIZE;
+
+                if (clickedRow >= 0 && clickedRow < GameScreen.BOARD_SIZE && clickedCol >= 0
+                        && clickedCol < GameScreen.BOARD_SIZE) {
+                    if (!game.pieceSelected) {
+                        if (game.board[clickedRow][clickedCol] == game.currentPlayer) {
+                            game.selectedRow = clickedRow;
+                            game.selectedCol = clickedCol;
+                            game.pieceSelected = true;
+                        }
+                    } else {
+                        if (game.isValidMove(game.selectedRow, game.selectedCol, clickedRow, clickedCol)) {
+                            game.makeMove(game.selectedRow, game.selectedCol, clickedRow, clickedCol);
+                            game.currentPlayer = -game.currentPlayer;
+                        }
+                        if (game.board[clickedRow][clickedCol] == game.currentPlayer) {
+                            game.selectedRow = clickedRow;
+                            game.selectedCol = clickedCol;
+                            game.pieceSelected = true;
+                        } else {
+                            game.pieceSelected = false;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public class BotPlayer implements Player {
+        private RandomBot bot;
+    
+        public BotPlayer() {
+            this.bot = new RandomBot();  // Your bot logic
+        }
+
+        @Override
+        public boolean isHuman() {
+            return false;
+        }
+    
+        @Override
+        public void takeTurn(GameLogic game) {
+            int[] botMove = bot.makeBotMove(game.board, game.currentPlayer);
+            if (botMove != null) {
+                game.makeMove(botMove[0], botMove[1], botMove[2], botMove[3]);
+                game.currentPlayer = -game.currentPlayer;
+            }
         }
     }
 }

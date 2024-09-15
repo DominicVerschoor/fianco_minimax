@@ -23,7 +23,7 @@ public class GameScreen implements Screen {
     public static final int BOARD_SIZE = 9;
     public static final int TILE_SIZE = 64;
 
-    private int[][] board = {
+    public int[][] board = {
             { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
             { 0, 1, 0, 0, 0, 0, 0, 1, 0 },
             { 0, 0, 1, 0, 0, 0, 1, 0, 0 },
@@ -35,9 +35,9 @@ public class GameScreen implements Screen {
             { -1, -1, -1, -1, -1, -1, -1, -1, -1 },
     };
 
-    public GameScreen(Main game) {
+    public GameScreen(Main game, boolean isHuman1, boolean isHuman2) {
         this.game = game;
-        this.logic = new GameLogic(board);
+        this.logic = new GameLogic(board, isHuman1, isHuman2);
         batch = new SpriteBatch();
         font = new BitmapFont();
 
