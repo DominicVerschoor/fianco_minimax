@@ -192,10 +192,12 @@ public class GameLogic {
     }
 
     public class BotPlayer implements Player {
-        private RandomBot bot;
+        // private RandomBot bot;
+        private MinimaxBot bot;
     
         public BotPlayer() {
-            this.bot = new RandomBot();  // Your bot logic
+            // this.bot = new RandomBot();
+            this.bot = new MinimaxBot();  // Your bot logic
         }
 
         @Override
