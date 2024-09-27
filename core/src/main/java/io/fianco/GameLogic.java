@@ -135,16 +135,23 @@ public class GameLogic {
 
         handleCapture(startRow, startCol, endRow, endCol);
 
-        isGameOver(endRow);
+        isGameOver();
     }
-
-    private void isGameOver(int endRow) {
-        if ((endRow == 0 && currentPlayer == -1) ||
-                (currentPlayer == 1 && endRow == GameScreen.BOARD_SIZE - 1)) {
-            this.gameOver = true;
+ 
+    private boolean isGameOver() {
+        boolean hasPieces = false;
+        for (int i = 0; i < board.length; i++) {
+            if (board[0][i] == -1 || board[8][i] == 1)
+                return true;
+            for (int j = 0; j < board[0].length; j++) {
+                if (board[i][j] != 0) {
+                    hasPieces = true;
+                }
+            }
         }
-    }
 
+        return !hasPieces;
+    }
 
     public interface Player {
         boolean isHuman();

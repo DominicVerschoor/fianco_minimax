@@ -1,12 +1,10 @@
 package io.fianco.Bots;
 
+import java.util.Arrays;
 import java.util.List;
-import io.fianco.GameLogic;
-import io.fianco.GameScreen;
-import java.util.ArrayList;
 
 public class MinimaxBot extends Bot {
-    private int depth = 2;
+    private int depth = 3;
 
     private class BestMove {
         int[] move;
@@ -31,7 +29,7 @@ public class MinimaxBot extends Bot {
 
     private BestMove negaMax(int[][] board, int depth, int a, int b, int currentPlayer) {
         if (depth == 0 || isGameOver(board, currentPlayer)) {
-            return new BestMove(null, currentPlayer * evaluate(board, currentPlayer));
+            return new BestMove(null, evaluate(board, currentPlayer));
         }
 
         int maxScore = Integer.MIN_VALUE;
@@ -40,7 +38,7 @@ public class MinimaxBot extends Bot {
 
         for (int[] move : possibleMoves) {
             int[][] newBoard = copyBoard(board);
-            
+
             simulateMove(newBoard, move[0], move[1], move[2], move[3]);
 
             BestMove res = negaMax(newBoard, depth - 1, -b, -a, -currentPlayer);
@@ -58,6 +56,8 @@ public class MinimaxBot extends Bot {
             }
         }
 
+        System.out.println(currentPlayer + ":(" + bestMove[0] + ", " + bestMove[1] + ") " + "(" + bestMove[2] + ", "
+                + bestMove[3] + "): " + maxScore);
         return new BestMove(bestMove, maxScore);
     }
 
@@ -67,7 +67,7 @@ public class MinimaxBot extends Bot {
             newBoard[i] = java.util.Arrays.copyOf(board[i], board[i].length); // Copy each row (deep copy)
         }
         return newBoard;
-    }    
+    }
 
     private int evaluate(int[][] board, int currentPlayer) {
         int pieceDiff = 0;
@@ -98,12 +98,22 @@ public class MinimaxBot extends Bot {
     }
 
     private boolean isGameOver(int[][] board, int currentPlayer) {
+        boolean hasWhite = false;
+        boolean hasBlack = false;
         for (int i = 0; i < board.length; i++) {
             if (board[0][i] == -1 || board[8][i] == 1)
                 return true;
+            for (int j = 0; j < board[0].length; j++) {
+                if (board[i][j] == 1) {
+                    hasWhite = true;
+                }
+                if (board[i][j] == -1) {
+                    hasBlack = true;
+                }
+            }
         }
 
-        return false;
+        return !(hasWhite && hasBlack);
     }
 
     public void setDepth(int depth) {
