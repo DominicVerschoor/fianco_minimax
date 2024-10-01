@@ -14,11 +14,13 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 public class StartScreen extends ScreenAdapter {
-
     private Main game;
     private Stage stage;
     private Skin skin; // For button and label styling
     private BitmapFont font;
+
+    private Label titleLabel;
+    private TextButton startButton, player1HumanButton, player2HumanButton, player1BotButton, player2BotButton;
 
     public StartScreen(Main game) {
         this.game = game;
@@ -31,37 +33,24 @@ public class StartScreen extends ScreenAdapter {
     }
 
     private void mainMenuDisplay() {
-        // Create a table for layout management
-        Table table = new Table();
-        table.setFillParent(true); // Ensure the table takes up the entire screen
-        table.center(); // Align elements to the top by default
+        // Create the title label
+        titleLabel = new Label("Welcome to the Fianco!", skin);
+        titleLabel.setFontScale(2); // Set font scale for the title
 
-        // Create the title label and add it to the table (centered at the top)
-        Label titleLabel = new Label("Welcome to the Fianco Game!", skin);
-        titleLabel.setFontScale(2); // Make the title larger
-        table.add(titleLabel).padTop(100).center(); // Add padding and center it
+        // Create buttons
+        startButton = new TextButton("Start", skin);
+        player1HumanButton = new TextButton("Mortal", skin);
+        player2HumanButton = new TextButton("Mortal", skin);
+        player1BotButton = new TextButton("Machine", skin);
+        player2BotButton = new TextButton("Machine", skin);
 
-        // Create buttons for the start and exit options
-        TextButton startButton = new TextButton("Start Game", skin);
-        TextButton player1HumanButton = new TextButton("Mortal", skin);
-        TextButton player2HumanButton = new TextButton("Mortal", skin);
-        TextButton player1BotButton = new TextButton("Machine", skin);
-        TextButton player2BotButton = new TextButton("Machine", skin);
-
-        // Add the buttons to the table (aligned at the bottom)
-        table.row().padTop(150); // First row (top row with two buttons)
-        table.add(player1HumanButton).padBottom(10).padRight(10).center();
-        table.add(player2HumanButton).padBottom(10).padLeft(10).center();
-
-        table.row(); // Second row (with two buttons below)
-        table.add(player1BotButton).padBottom(10).padRight(10).center();
-        table.add(player2BotButton).padBottom(10).padLeft(10).center();
-
-        table.row(); // Third row (single centered button)
-        table.add(startButton).colspan(2).padBottom(10).center();
-
-        // Add the table to the stage
-        stage.addActor(table);
+        // Add all elements to the stage (without setting position here)
+        stage.addActor(titleLabel);
+        stage.addActor(player1HumanButton);
+        stage.addActor(player2HumanButton);
+        stage.addActor(player1BotButton);
+        stage.addActor(player2BotButton);
+        stage.addActor(startButton);
 
         final boolean[] isHumanPlayers = { true, false };
 
@@ -76,7 +65,7 @@ public class StartScreen extends ScreenAdapter {
 
         player1HumanButton.addListener(event -> {
             if (event.toString().equals("touchDown")) {
-                isHumanPlayers[0] = true; // Switch to GameScreen
+                isHumanPlayers[0] = true; // Player 1 is human
                 return true;
             }
             return false;
@@ -84,7 +73,7 @@ public class StartScreen extends ScreenAdapter {
 
         player2HumanButton.addListener(event -> {
             if (event.toString().equals("touchDown")) {
-                isHumanPlayers[1] = true; // Switch to GameScreen
+                isHumanPlayers[1] = true; // Player 2 is human
                 return true;
             }
             return false;
@@ -92,7 +81,7 @@ public class StartScreen extends ScreenAdapter {
 
         player1BotButton.addListener(event -> {
             if (event.toString().equals("touchDown")) {
-                isHumanPlayers[0] = false; // Switch to GameScreen
+                isHumanPlayers[0] = false; // Player 1 is bot
                 return true;
             }
             return false;
@@ -100,11 +89,39 @@ public class StartScreen extends ScreenAdapter {
 
         player2BotButton.addListener(event -> {
             if (event.toString().equals("touchDown")) {
-                isHumanPlayers[1] = false; // Switch to GameScreen
+                isHumanPlayers[1] = false; // Player 2 is bot
                 return true;
             }
             return false;
         });
+
+        // Set the initial positions and sizes based on the current window size
+        updateUIPositions(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+    }
+
+    private void updateUIPositions(float windowWidth, float windowHeight) {
+        float buttonHeight = 0.13f;
+        float buttonWidth = 0.35f;
+
+        // Set position and size for the title label
+        titleLabel.setPosition(windowWidth * 0.12f, windowHeight * 0.85f); // Start at 10% from left, 15% from top
+        titleLabel.setSize(windowWidth * 0.8f, windowHeight * 0.1f); // 80% width and 10% height of window size
+
+        // Set positions and sizes for the buttons (relative to window size)
+        player1HumanButton.setPosition(windowWidth * 0.1f, windowHeight * 0.5f); // 10% from left, 50% from bottom
+        player1HumanButton.setSize(windowWidth * buttonWidth, windowHeight * buttonHeight); // Button width=35%, height=8%
+
+        player2HumanButton.setPosition(windowWidth * 0.55f, windowHeight * 0.5f); // 55% from left
+        player2HumanButton.setSize(windowWidth * buttonWidth, windowHeight * buttonHeight);
+
+        player1BotButton.setPosition(windowWidth * 0.1f, windowHeight * 0.35f); // 10% from left, 40% from bottom
+        player1BotButton.setSize(windowWidth * buttonWidth, windowHeight * buttonHeight);
+
+        player2BotButton.setPosition(windowWidth * 0.55f, windowHeight * 0.35f);
+        player2BotButton.setSize(windowWidth * buttonWidth, windowHeight * buttonHeight);
+
+        startButton.setPosition(windowWidth * 0.33f, windowHeight * 0.2f); // 35% from left, 20% from bottom
+        startButton.setSize(windowWidth * buttonWidth, windowHeight * buttonHeight); // Button width=30%, height=10%
     }
 
     @Override
@@ -121,6 +138,11 @@ public class StartScreen extends ScreenAdapter {
         // Draw the stage and its UI elements
         stage.act(delta);
         stage.draw();
+    }
+
+    @Override
+    public void resize(int width, int height) {
+        updateUIPositions(width, height);
     }
 
     @Override

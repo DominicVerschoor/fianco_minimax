@@ -8,9 +8,13 @@ public class RandomBot extends Bot {
 
     private Random random = new Random();
 
+    public RandomBot(int player){
+        super(player);
+    }
+
     @Override
-    public int[] makeBotMove(int[][] board, int currentPlayer) {
-        List<int[]> validMoves = getMoves(board, currentPlayer);
+    public int[] makeBotMove(int[][] board) {
+        List<int[]> validMoves = getMoves(board, player);
         if (!validMoves.isEmpty()) {
             return validMoves.get(random.nextInt(validMoves.size())); // Choose a random valid move
         }

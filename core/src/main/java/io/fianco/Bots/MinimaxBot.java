@@ -14,24 +14,25 @@ public class MinimaxBot extends Bot {
             this.move = move;
             this.score = score;
         }
+    }
 
-        public void flipScore() {
-            this.score = -this.score;
-        }
+    public MinimaxBot(int player){
+        super(player);
     }
 
     @Override
-    public int[] makeBotMove(int[][] board, int currentPlayer) {
-        BestMove bestMove = negaMax(board, this.depth, -99999, 99999, currentPlayer);
+    public int[] makeBotMove(int[][] board) {
+        BestMove bestMove = negaMax(board, this.depth, -99999, 99999, player, true);
 
         return bestMove.move; // No valid moves
     }
 
-    private BestMove negaMax(int[][] board, int depth, int a, int b, int currentPlayer) {
-        if (depth == 0 || isGameOver(board, currentPlayer)) {
-            return new BestMove(null, evaluate(board, currentPlayer));
-        }
-
+    private BestMove negaMax(int[][] board, int depth, int a, int b, int currentPlayer, boolean isRoot) {
+        if (isGameOver(board))
+            return new BestMove(null, (currentPlayer == player) ? 10000 : -10000);
+        if (depth == 0)
+            return new BestMove(null, evaluate(board));
+       
         int maxScore = Integer.MIN_VALUE;
         int[] bestMove = null;
         List<int[]> possibleMoves = getMoves(board, currentPlayer);
@@ -41,8 +42,10 @@ public class MinimaxBot extends Bot {
 
             simulateMove(newBoard, move[0], move[1], move[2], move[3]);
 
-            BestMove res = negaMax(newBoard, depth - 1, -b, -a, -currentPlayer);
+            BestMove res = negaMax(newBoard, depth - 1, -b, -a, -currentPlayer, false);
             int eval = -res.score;
+
+            System.out.println(" Depth: " + depth + " (" + move[0] + ", " + move[1] + ") " + "(" + move[2] + ", " + move[3] + "): " + eval + " root: " + isRoot );
             // Update the best move if this is the best evaluation so far
             if (eval > maxScore) {
                 maxScore = eval;
@@ -56,9 +59,7 @@ public class MinimaxBot extends Bot {
             }
         }
 
-        System.out.println(currentPlayer + ":(" + bestMove[0] + ", " + bestMove[1] + ") " + "(" + bestMove[2] + ", "
-                + bestMove[3] + "): " + maxScore);
-        return new BestMove(bestMove, maxScore);
+        return new BestMove(bestMove, maxScore); 
     }
 
     private int[][] copyBoard(int[][] board) {
@@ -69,11 +70,11 @@ public class MinimaxBot extends Bot {
         return newBoard;
     }
 
-    private int evaluate(int[][] board, int currentPlayer) {
+    private int evaluate(int[][] board) {
         int pieceDiff = 0;
         for (int i = 0; i < board.length; i++) {
             for (int j = 0; j < board.length; j++) {
-                pieceDiff += board[i][j] == currentPlayer ? 10 : -10;
+                pieceDiff += board[i][j] == player ? 10 : -10;
             }
         }
 
@@ -97,11 +98,11 @@ public class MinimaxBot extends Bot {
         simulateCapture(board, startRow, startCol, endRow, endCol);
     }
 
-    private boolean isGameOver(int[][] board, int currentPlayer) {
+    private boolean isGameOver(int[][] board) {
         boolean hasWhite = false;
         boolean hasBlack = false;
         for (int i = 0; i < board.length; i++) {
-            if (board[0][i] == -1 || board[8][i] == 1)
+            if (board[0][i] == -1 || board[board.length-1][i] == 1)
                 return true;
             for (int j = 0; j < board[0].length; j++) {
                 if (board[i][j] == 1) {

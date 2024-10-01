@@ -6,8 +6,13 @@ import java.util.List;
 import io.fianco.GameScreen;
 
 public abstract class Bot {
+    public int player;
 
-    public int[] makeBotMove(int[][] board, int currentPlayer) {
+    public Bot(int player){
+        this.player = player;
+    }
+
+    public int[] makeBotMove(int[][] board) {
         return null;
     }
 

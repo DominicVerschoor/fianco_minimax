@@ -1,6 +1,7 @@
 package io.fianco;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
@@ -8,7 +9,7 @@ import com.badlogic.gdx.Gdx;
 import io.fianco.Bots.*;
 
 public class GameLogic {
-    private List<int[][]> history;
+    private GameScreen screen;
     private int[][] board;
     private int currentPlayer;
     private boolean pieceSelected = false;
@@ -16,14 +17,13 @@ public class GameLogic {
     private boolean gameOver = false;
     private Player player1, player2;
 
-    public GameLogic(int[][] board, boolean isHuman1, boolean isHuman2) {
+    public GameLogic(int[][] board, boolean isHuman1, boolean isHuman2, GameScreen screen) {
+        this.screen = screen;
         this.board = board;
         this.currentPlayer = 1;
-        this.history = new ArrayList<int[][]>();
-        this.history.add(board);
 
-        this.player1 = isHuman1 ? new HumanPlayer() : new BotPlayer();
-        this.player2 = isHuman2 ? new HumanPlayer() : new BotPlayer();
+        this.player1 = isHuman1 ? new HumanPlayer() : new BotPlayer(1);
+        this.player2 = isHuman2 ? new HumanPlayer() : new BotPlayer(-1);
     }
 
     public void handleInput() {
@@ -33,11 +33,22 @@ public class GameLogic {
         }
 
         getCurrentPlayer().takeTurn(this);
-        history.add(board);
     }
 
     private Player getCurrentPlayer() {
         return currentPlayer == 1 ? player1 : player2;
+    }
+
+    public void setCurrentPlayer(int player){
+        currentPlayer = player;
+    }
+
+    public void setBoard(int[][] board){
+        this.board = board;
+    }
+
+    public int getPlayer(){
+        return currentPlayer;
     }
 
     private boolean isValidMove(int startRow, int startCol, int endRow, int endCol) {
@@ -135,6 +146,7 @@ public class GameLogic {
 
         handleCapture(startRow, startCol, endRow, endCol);
 
+        screen.addBoard();
         isGameOver();
     }
  
@@ -202,9 +214,9 @@ public class GameLogic {
         // private RandomBot bot;
         private MinimaxBot bot;
     
-        public BotPlayer() {
+        public BotPlayer(int player) {
             // this.bot = new RandomBot();
-            this.bot = new MinimaxBot();  // Your bot logic
+            this.bot = new MinimaxBot(player);  // Your bot logic
         }
 
         @Override
@@ -214,7 +226,7 @@ public class GameLogic {
     
         @Override
         public void takeTurn(GameLogic game) {
-            int[] botMove = bot.makeBotMove(game.board, game.currentPlayer);
+            int[] botMove = bot.makeBotMove(game.board);
             if (botMove != null) {
                 game.makeMove(botMove[0], botMove[1], botMove[2], botMove[3]);
                 game.currentPlayer = -game.currentPlayer;
