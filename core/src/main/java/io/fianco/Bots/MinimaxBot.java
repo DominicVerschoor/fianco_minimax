@@ -27,18 +27,22 @@ public class MinimaxBot extends Bot {
 
     @Override
     public int[] makeBotMove(int[][] board) {
-        BestMove bestMove = negaMax(board, this.depth, -99999, 99999, player, true);
+        BestMove bestMove = negaMax(board, this.depth, -99999, 99999, player);
+        System.out.println();
+        System.out.println(" Score: " + bestMove.score + " (" + bestMove.move[0] + ", " + bestMove.move[1] + ") " + "("
+                + bestMove.move[2] + ", "
+                + bestMove.move[3] + ")");
 
         return bestMove.move; // No valid moves
     }
 
-    private BestMove negaMax(int[][] board, int depth, int a, int b, int currentPlayer, boolean isRoot) {
+    private BestMove negaMax(int[][] board, int depth, int a, int b, int currentPlayer) {
         int maxScore = Integer.MIN_VALUE;
         int[] bestMove = null;
         List<int[]> possibleMoves = getMoves(board, currentPlayer);
 
         if (isGameOver(board))
-            return new BestMove(null, (currentPlayer == player) ? 10000 : -10000);
+            return new BestMove(null, -10000);
         if (depth == 0)
             return new BestMove(null, evaluate(board, currentPlayer, possibleMoves.size()));
 
@@ -47,11 +51,16 @@ public class MinimaxBot extends Bot {
 
             simulateMove(newBoard, move[0], move[1], move[2], move[3]);
 
-            BestMove res = negaMax(newBoard, depth - 1, -b, -a, -currentPlayer, false);
+            BestMove res = negaMax(newBoard, depth - 1, -b, -a, -currentPlayer);
             res.negate();
 
-            System.out.println(" Depth: " + depth + " (" + move[0] + ", " + move[1] + ") " + "(" + move[2] + ", "
-                    + move[3] + "): " + res.score + " root: " + isRoot);
+            if (currentPlayer == 1)
+                System.out.println(" Depth: " + depth + " (" + move[0] + ", " + move[1] + ") " + "(" + move[2] + ", "
+                        + move[3] + "): " + res.score);
+            else
+                System.out.println(" Depth: " + depth + " [" + move[0] + ", " + move[1] + "] " + "[" + move[2] + ", "
+                        + move[3] + "]: " + res.score );
+
             // Update the best move if this is the best evaluation so far
             if (res.score > maxScore) {
                 maxScore = res.score;
@@ -68,13 +77,20 @@ public class MinimaxBot extends Bot {
         return new BestMove(bestMove, maxScore);
     }
 
-    private int[][] copyBoard(int[][] board) {
-        int[][] newBoard = new int[board.length][];
-        for (int i = 0; i < board.length; i++) {
-            newBoard[i] = java.util.Arrays.copyOf(board[i], board[i].length); // Copy each row (deep copy)
-        }
-        return newBoard;
-    }
+    // private int evaluate(int[][] board, int currentPlayer) {
+    // int pieceDiff = 0;
+    // for (int i = 0; i < board.length; i++) {
+    // for (int j = 0; j < board.length; j++) {
+    // if (board[i][j] == 1) {
+    // pieceDiff++;
+    // // For player 1, find the furthest row (highest row index)
+    // } else if (board[i][j] == -1) {
+    // pieceDiff--;
+    // }
+    // }
+    // }
+    // return pieceDiff;
+    // }
 
     private int evaluate(int[][] board, int currentPlayer, int possibleMoves) {
         int finalScore = 0;
@@ -104,10 +120,23 @@ public class MinimaxBot extends Bot {
         if (this.isCapture)
             captureScore += 2 * possibleMoves;
 
-        progressScore = furthestPlayer1Row - (board.length - 1 - furthestPlayerMinus1Row);
+        progressScore = furthestPlayer1Row - (board.length - 1 -
+                furthestPlayerMinus1Row);
 
-        finalScore += captureScore + possibleMoves + (currentPlayer * pieceScore) + (currentPlayer * progressScore) + randomFactor;
+        finalScore += captureScore + possibleMoves + (currentPlayer * pieceScore) +
+                (currentPlayer * progressScore)
+                + randomFactor;
         return finalScore;
+    }
+
+    private int[][] copyBoard(int[][] board) {
+        int[][] newBoard = new int[board.length][board[0].length];
+        for (int i = 0; i < board.length; i++) {
+            for (int j = 0; j < board[0].length; j++){
+                newBoard[i][j] = board[i][j]; // Copy each row (deep copy)
+            }
+        }
+        return newBoard;
     }
 
     private void simulateCapture(int[][] board, int startRow, int startCol, int endRow, int endCol) {

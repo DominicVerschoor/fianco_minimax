@@ -23,38 +23,38 @@ public class GameScreen implements Screen {
     private Skin skin;
     private int boardState;
     private List<int[][]> history;
-
+    private boolean isPaused;
 
     private Texture blackTile, whiteTile, whitePiece, blackPiece;
-    private TextButton back, forward;
+    private TextButton back, forward, pause;
     private GameLogic logic;
 
     public static final int BOARD_SIZE = 9;
     public static final int TILE_SIZE = 64;
 
-    // public int[][] board = {
-    //         { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-    //         { 0, 1, 0, 0, 0, 0, 0, 1, 0 },
-    //         { 0, 0, 1, 0, 0, 0, 1, 0, 0 },
-    //         { 0, 0, 0, 1, 0, 1, 0, 0, 0 },
-    //         { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-    //         { 0, 0, 0, -1, 0, -1, 0, 0, 0 },
-    //         { 0, 0, -1, 0, 0, 0, -1, 0, 0 },
-    //         { 0, -1, 0, 0, 0, 0, 0, -1, 0 },
-    //         { -1, -1, -1, -1, -1, -1, -1, -1, -1 },
-    // };
-
     public int[][] board = {
-    { 0, 0, 0, 1, 0, 0, 0, 0, 0 },
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-    { 0, -1, 0, 0, 0, 0, 0, 0, 0 },
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+            { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+            { 0, 1, 0, 0, 0, 0, 0, 1, 0 },
+            { 0, 0, 1, 0, 0, 0, 1, 0, 0 },
+            { 0, 0, 0, 1, 0, 1, 0, 0, 0 },
+            { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+            { 0, 0, 0, -1, 0, -1, 0, 0, 0 },
+            { 0, 0, -1, 0, 0, 0, -1, 0, 0 },
+            { 0, -1, 0, 0, 0, 0, 0, -1, 0 },
+            { -1, -1, -1, -1, -1, -1, -1, -1, -1 },
     };
+
+    // public int[][] board = {
+    // { 0, 0, 0, 1, 0, 0, 0, 0, 0 },
+    // { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    // { 0, -1, 0, 0, 0, 0, 0, 0, 0 },
+    // { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    // { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    // { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    // { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    // { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    // { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    // };
 
     public GameScreen(Main game, boolean isHuman1, boolean isHuman2) {
         this.game = game;
@@ -62,6 +62,7 @@ public class GameScreen implements Screen {
         this.history = new ArrayList<int[][]>();
         this.history.add(copyBoard(board));
         this.boardState = 0;
+        this.isPaused = false;
 
         batch = new SpriteBatch();
         font = new BitmapFont();
@@ -82,25 +83,34 @@ public class GameScreen implements Screen {
 
         // Add buttons to the stage
         stage.addActor(back);
+        stage.addActor(pause);
         stage.addActor(forward);
     }
 
     private void createButtons() {
         back = new TextButton("<", skin);
         forward = new TextButton(">", skin);
+        pause = new TextButton("||", skin);
         // Set positions and sizes for the buttons (relative to window size)
-        back.setPosition(Gdx.graphics.getWidth() * 0.75f, Gdx.graphics.getHeight() * 0.01f); // 10% from left, 50% from
+        back.setPosition(Gdx.graphics.getWidth() * 0.72f, Gdx.graphics.getHeight() * 0.01f); // 10% from left, 50% from
         // bottom
-        back.setSize(Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.111f); // Button width=35%, height=8%
+        back.setSize(Gdx.graphics.getWidth() * 0.08f, Gdx.graphics.getHeight() * 0.111f); // Button width=35%, height=8%
 
         // Set positions and sizes for the buttons (relative to window size)
-        forward.setPosition(Gdx.graphics.getWidth() * 0.85f, Gdx.graphics.getHeight() * 0.01f); // 10% from left, 50%
+        pause.setPosition(Gdx.graphics.getWidth() * 0.82f, Gdx.graphics.getHeight() * 0.01f); // 10% from left, 50% from
+        // bottom
+        pause.setSize(Gdx.graphics.getWidth() * 0.08f, Gdx.graphics.getHeight() * 0.111f); // Button width=35%,
+                                                                                           // height=8%
+
+        // Set positions and sizes for the buttons (relative to window size)
+        forward.setPosition(Gdx.graphics.getWidth() * 0.92f, Gdx.graphics.getHeight() * 0.01f); // 10% from left, 50%
         // from bottom
-        forward.setSize(Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.111f); // Button width=35%,
+        forward.setSize(Gdx.graphics.getWidth() * 0.08f, Gdx.graphics.getHeight() * 0.111f); // Button width=35%,
         // height=8%
 
         back.addListener(event -> {
             if (event.toString().equals("touchDown")) {
+                togglePause(true);
                 setBoard(true);
                 return true;
             }
@@ -109,28 +119,45 @@ public class GameScreen implements Screen {
 
         forward.addListener(event -> {
             if (event.toString().equals("touchDown")) {
+                togglePause(true);
                 setBoard(false);
+                return true;
+            }
+            return false;
+        });
+
+        pause.addListener(event -> {
+            if (event.toString().equals("touchDown")) {
+                togglePause(!isPaused);
                 return true;
             }
             return false;
         });
     }
 
+    public void togglePause(boolean paused) {
+        this.isPaused = paused;
+        if (isPaused)
+            pause.setText("=>");
+        else
+            pause.setText("||");
+    }
+
     public void setBoard(boolean back) {
         if (back) {
             if (boardState > 0) {
                 boardState--;
-                // Set the board to the previous state
-                int[][] previousState = history.get(boardState);
+                // Set the board to the previous state using a copy
+                int[][] previousState = copyBoard(history.get(boardState));
                 logic.setCurrentPlayer(-logic.getPlayer());
                 this.board = previousState;
                 logic.setBoard(previousState);
             }
-        } else{
+        } else {
             if (boardState < history.size() - 1) {
                 boardState++;
-                // Set the board to the next state
-                int[][] nextState = history.get(boardState);
+                // Set the board to the next state using a copy
+                int[][] nextState = copyBoard(history.get(boardState));
                 logic.setCurrentPlayer(-logic.getPlayer());
                 this.board = nextState;
                 logic.setBoard(nextState);
@@ -138,26 +165,31 @@ public class GameScreen implements Screen {
         }
     }
 
+    public boolean getPause() {
+        return this.isPaused;
+    }
+
     public void addBoard() {
-        System.out.println(logic.getPlayer());
-        // If we are not at the most recent move (used 'back' to an earlier move), truncate future states
+        // If we are not at the most recent move (used 'back' to an earlier move),
+        // truncate future states
         if (boardState < history.size() - 1) {
             history = history.subList(0, boardState + 1); // Remove all future moves beyond the current state
         }
-    
+
         // Add the current board state to history
         history.add(copyBoard(board));
-        boardState = history.size() - 1;  // Set the board state index to the latest move
+        boardState = history.size() - 1; // Set the board state index to the latest move
     }
 
     private int[][] copyBoard(int[][] board) {
-        int[][] newBoard = new int[board.length][];
+        int[][] newBoard = new int[board.length][board[0].length];
         for (int i = 0; i < board.length; i++) {
-            newBoard[i] = java.util.Arrays.copyOf(board[i], board[i].length); // Copy each row (deep copy)
+            for (int j = 0; j < board[0].length; j++) {
+                newBoard[i][j] = board[i][j]; // Copy each row (deep copy)
+            }
         }
         return newBoard;
     }
-
 
     @Override
     public void render(float delta) {

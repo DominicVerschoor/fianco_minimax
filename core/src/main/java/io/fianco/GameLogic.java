@@ -39,15 +39,15 @@ public class GameLogic {
         return currentPlayer == 1 ? player1 : player2;
     }
 
-    public void setCurrentPlayer(int player){
+    public void setCurrentPlayer(int player) {
         currentPlayer = player;
     }
 
-    public void setBoard(int[][] board){
+    public void setBoard(int[][] board) {
         this.board = board;
     }
 
-    public int getPlayer(){
+    public int getPlayer() {
         return currentPlayer;
     }
 
@@ -149,7 +149,7 @@ public class GameLogic {
         screen.addBoard();
         isGameOver();
     }
- 
+
     private boolean isGameOver() {
         boolean hasPieces = false;
         for (int i = 0; i < board.length; i++) {
@@ -167,6 +167,7 @@ public class GameLogic {
 
     public interface Player {
         boolean isHuman();
+
         void takeTurn(GameLogic game);
     }
 
@@ -186,6 +187,7 @@ public class GameLogic {
 
                 if (clickedRow >= 0 && clickedRow < GameScreen.BOARD_SIZE && clickedCol >= 0
                         && clickedCol < GameScreen.BOARD_SIZE) {
+                    screen.togglePause(false);
                     if (!game.pieceSelected) {
                         if (game.board[clickedRow][clickedCol] == game.currentPlayer) {
                             game.selectedRow = clickedRow;
@@ -213,23 +215,25 @@ public class GameLogic {
     public class BotPlayer implements Player {
         // private RandomBot bot;
         private MinimaxBot bot;
-    
+
         public BotPlayer(int player) {
             // this.bot = new RandomBot();
-            this.bot = new MinimaxBot(player);  // Your bot logic
+            this.bot = new MinimaxBot(player); // Your bot logic
         }
 
         @Override
         public boolean isHuman() {
             return false;
         }
-    
+
         @Override
         public void takeTurn(GameLogic game) {
-            int[] botMove = bot.makeBotMove(game.board);
-            if (botMove != null) {
-                game.makeMove(botMove[0], botMove[1], botMove[2], botMove[3]);
-                game.currentPlayer = -game.currentPlayer;
+            if (!screen.getPause()) {
+                int[] botMove = bot.makeBotMove(game.board);
+                if (botMove != null) {
+                    game.makeMove(botMove[0], botMove[1], botMove[2], botMove[3]);
+                    game.currentPlayer = -game.currentPlayer;
+                }
             }
         }
     }
