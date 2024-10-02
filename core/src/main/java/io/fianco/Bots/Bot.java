@@ -6,10 +6,12 @@ import java.util.List;
 import io.fianco.GameScreen;
 
 public abstract class Bot {
-    public int player;
+    protected int player;
+    protected boolean isCapture;
 
     public Bot(int player){
         this.player = player;
+        this.isCapture = false;
     }
 
     public int[] makeBotMove(int[][] board) {
@@ -55,7 +57,15 @@ public abstract class Bot {
 
         // If capture moves are available, return only those; otherwise, return regular
         // moves
-        return !captureMoves.isEmpty() ? captureMoves : regularMoves;
+        if (captureMoves.isEmpty()){
+            isCapture = false;
+            return regularMoves;
+        } else{
+            isCapture = true;
+            return captureMoves;
+        }
+
+        // return !captureMoves.isEmpty() ? captureMoves : regularMoves;
     }
 
     // Check if a move is a valid regular move
