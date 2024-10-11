@@ -3,15 +3,20 @@ package io.fianco.Bots;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.fianco.GameLogic;
 import io.fianco.GameScreen;
 
 public abstract class Bot {
     protected int player;
     protected boolean isCapture;
+    protected GameScreen game;
+    protected GameLogic logic;
 
-    public Bot(int player){
+    public Bot(int player, GameScreen game, GameLogic logic){
         this.player = player;
         this.isCapture = false;
+        this.game = game;
+        this.logic = logic;
     }
 
     public int[] makeBotMove(int[][] board) {
@@ -27,14 +32,14 @@ public abstract class Bot {
             for (int col = 0; col < GameScreen.BOARD_SIZE; col++) {
                 if (board[row][col] == currentPlayer) {
                     // Check for capture moves
-                    if (canCapture(board, row, col, currentPlayer)) {
+                    if (logic.canCapture(board, row, col, currentPlayer)) {
                         for (int[] direction : getCaptureDirections(currentPlayer)) {
                             int newRow = row + direction[0];
                             int newCol = col + direction[1];
                             int jumpedRow = row + direction[0] / 2;
                             int jumpedCol = col + direction[1] / 2;
 
-                            if (isValidCapture(board, row, col, jumpedRow, jumpedCol, newRow, newCol, currentPlayer)) {
+                            if (logic.isValidCapture(board, row, col, jumpedRow, jumpedCol, newRow, newCol, currentPlayer)) {
                                 captureMoves.add(new int[] { row, col, newRow, newCol });
                             }
                         }
@@ -55,17 +60,9 @@ public abstract class Bot {
             }
         }
 
-        // If capture moves are available, return only those; otherwise, return regular
-        // moves
-        if (captureMoves.isEmpty()){
-            isCapture = false;
-            return regularMoves;
-        } else{
-            isCapture = true;
-            return captureMoves;
-        }
-
-        // return !captureMoves.isEmpty() ? captureMoves : regularMoves;
+        
+        // If capture moves are available, return only those; otherwise, return regular moves
+        return !captureMoves.isEmpty() ? captureMoves : regularMoves;
     }
 
     // Check if a move is a valid regular move
@@ -76,39 +73,6 @@ public abstract class Bot {
         }
 
         // Check if the end position is empty
-        return board[endRow][endCol] == 0;
-    }
-
-    // Check if the current piece can capture
-    private boolean canCapture(int[][] board, int row, int col, int currentPlayer) {
-        for (int[] direction : getCaptureDirections(currentPlayer)) {
-            int newRow = row + direction[0];
-            int newCol = col + direction[1];
-            int jumpedRow = row + direction[0] / 2;
-            int jumpedCol = col + direction[1] / 2;
-
-            if (isValidCapture(board, row, col, jumpedRow, jumpedCol, newRow, newCol, currentPlayer)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    // Check if a move is a valid capture move, using the capture logic from the
-    // GameLogic class
-    private boolean isValidCapture(int[][] board, int startRow, int startCol, int middleRow, int middleCol, int endRow,
-            int endCol, int currentPlayer) {
-        // Check bounds
-        if (endRow < 0 || endRow >= GameScreen.BOARD_SIZE || endCol < 0 || endCol >= GameScreen.BOARD_SIZE) {
-            return false;
-        }
-
-        // Check that there is an opponent's piece to capture
-        if (board[middleRow][middleCol] != -currentPlayer) {
-            return false;
-        }
-
-        // Check that the end position is empty
         return board[endRow][endCol] == 0;
     }
 

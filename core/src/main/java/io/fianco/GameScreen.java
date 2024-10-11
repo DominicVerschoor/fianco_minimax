@@ -6,6 +6,7 @@ import java.util.List;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -47,13 +48,13 @@ public class GameScreen implements Screen {
     // public int[][] board = {
     // { 0, 0, 0, 1, 0, 0, 0, 0, 0 },
     // { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-    // { 0, -1, 0, 0, 0, 0, 0, 0, 0 },
     // { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
     // { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
     // { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
     // { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
     // { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
     // { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    // { 0, 0, 0, 0, 0, 0, 0, 0, -1 },
     // };
 
     public GameScreen(Main game, boolean isHuman1, boolean isHuman2) {
@@ -169,6 +170,14 @@ public class GameScreen implements Screen {
         return this.isPaused;
     }
 
+    public Main getGame(){
+        return this.game;
+    }
+
+    public List<int[][]> getHistory(){
+        return history;
+    }
+
     public void addBoard() {
         // If we are not at the most recent move (used 'back' to an earlier move),
         // truncate future states
@@ -194,6 +203,8 @@ public class GameScreen implements Screen {
     @Override
     public void render(float delta) {
         // Clear screen with white color
+        Gdx.gl.glClearColor(0, 0, 0, 1);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         ScreenUtils.clear(1, 1, 1, 1);
 
         batch.begin();

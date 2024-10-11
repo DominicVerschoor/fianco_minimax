@@ -1,8 +1,8 @@
 package io.fianco;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 
@@ -14,25 +14,28 @@ public class GameLogic {
     private int currentPlayer;
     private boolean pieceSelected = false;
     private int selectedRow = -1, selectedCol = -1;
-    private boolean gameOver = false;
     private Player player1, player2;
+    private ZobristHashing zobristHashing;
 
     public GameLogic(int[][] board, boolean isHuman1, boolean isHuman2, GameScreen screen) {
         this.screen = screen;
         this.board = board;
         this.currentPlayer = 1;
+        this.zobristHashing = new ZobristHashing(screen.BOARD_SIZE);
 
-        this.player1 = isHuman1 ? new HumanPlayer() : new BotPlayer(1);
-        this.player2 = isHuman2 ? new HumanPlayer() : new BotPlayer(-1);
+        this.player1 = isHuman1 ? new HumanPlayer() : new BotPlayer(1, this);
+        this.player2 = isHuman2 ? new HumanPlayer() : new BotPlayer(-1, this);
     }
 
     public void handleInput() {
-        if (this.gameOver) {
-            System.out.println("Player: " + -currentPlayer + " WINS!");
-            ((Game) Gdx.app.getApplicationListener()).setScreen(new GameOver(-currentPlayer));
+        if (isGameOver(board) && !screen.getPause()) {
+            ((Game) Gdx.app.getApplicationListener()).setScreen(new GameOver(screen.getGame(), -currentPlayer));
+        } else if (isDraw(screen.getHistory()) && !screen.getPause()){
+            ((Game) Gdx.app.getApplicationListener()).setScreen(new GameOver(screen.getGame(), 0));
         }
-
-        getCurrentPlayer().takeTurn(this);
+        else {
+            getCurrentPlayer().takeTurn(this);
+        }
     }
 
     private Player getCurrentPlayer() {
@@ -91,7 +94,7 @@ public class GameLogic {
         for (int row = 0; row < GameScreen.BOARD_SIZE; row++) {
             for (int col = 0; col < GameScreen.BOARD_SIZE; col++) {
                 if (board[row][col] == currentPlayer) {
-                    if (canCapture(row, col)) {
+                    if (canCapture(board, row, col, currentPlayer)) {
                         return true; // If any piece can capture, return true
                     }
                 }
@@ -100,31 +103,63 @@ public class GameLogic {
         return false;
     }
 
-    private boolean canCapture(int row, int col) {
-        // Check horizontal captures (both left and right)
+    public boolean canCapture(int[][] board, int row, int col, int currentPlayer) {
+        for (int[] direction : getCaptureDirections(currentPlayer)) {
+            int newRow = row + direction[0];
+            int newCol = col + direction[1];
+            int jumpedRow = row + direction[0] / 2;
+            int jumpedCol = col + direction[1] / 2;
+
+            if (isValidCapture(board, row, col, jumpedRow, jumpedCol, newRow, newCol, currentPlayer)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Return possible capture directions (captures are always 2 squares away)
+    private int[][] getCaptureDirections(int currentPlayer) {
+        // Depending on the player, capture directions can vary (adjust as necessary)
         if (currentPlayer == 1) {
-            if (isValidCapture(row, col, row + 1, col - 1, row + 2, col - 2))
-                return true; // Left capture
-            if (isValidCapture(row, col, row + 1, col + 1, row + 2, col + 2))
-                return true; // Right capture
+            return new int[][] {
+                    { 2, 2 }, { 2, -2 }
+            };
         } else {
-            if (isValidCapture(row, col, row - 1, col - 1, row - 2, col - 2))
-                return true; // Left capture
-            if (isValidCapture(row, col, row - 1, col + 1, row - 2, col + 2))
-                return true; // Right capture
+            return new int[][] {
+                    { -2, 2 }, { -2, -2 }
+            };
+        }
+    }
+
+    // Check for draws
+    public boolean isDraw(List<int[][]> history) {
+        HashMap<Long, Integer> hashCount = new HashMap<>();
+
+        for (int[][] board : history) {
+            long hash = zobristHashing.computeHash(board);
+            // Keep track of how many times each state was seen
+            hashCount.put(hash, hashCount.getOrDefault(hash, 0) + 1);
+
+            // Check if any hash has been seen three times
+            if (hashCount.get(hash) >= 3) {
+                return true;
+            }
         }
 
         return false;
     }
 
-    private boolean isValidCapture(int startRow, int startCol, int middleRow, int middleCol, int endRow, int endCol) {
+    public boolean isValidCapture(int[][] board, int startRow, int startCol, int middleRow, int middleCol, int endRow,
+            int endCol, int currentPlayer) {
         // Check bounds
-        if (endRow < 0 || endRow >= GameScreen.BOARD_SIZE || endCol < 0 || endCol >= GameScreen.BOARD_SIZE)
+        if (endRow < 0 || endRow >= GameScreen.BOARD_SIZE || endCol < 0 || endCol >= GameScreen.BOARD_SIZE) {
             return false;
+        }
 
         // Check that there is an opponent's piece to capture
-        if (board[middleRow][middleCol] != -currentPlayer)
+        if (board[middleRow][middleCol] != -currentPlayer) {
             return false;
+        }
 
         // Check that the end position is empty
         return board[endRow][endCol] == 0;
@@ -147,22 +182,30 @@ public class GameLogic {
         handleCapture(startRow, startCol, endRow, endCol);
 
         screen.addBoard();
-        isGameOver();
+
+        if (isGameOver(board) || isDraw(screen.getHistory())) {
+            screen.togglePause(true);
+        }
+
     }
 
-    private boolean isGameOver() {
-        boolean hasPieces = false;
+    public boolean isGameOver(int[][] board) {
+        boolean hasWhite = false;
+        boolean hasBlack = false;
         for (int i = 0; i < board.length; i++) {
-            if (board[0][i] == -1 || board[8][i] == 1)
+            if (board[0][i] == -1 || board[board.length - 1][i] == 1)
                 return true;
             for (int j = 0; j < board[0].length; j++) {
-                if (board[i][j] != 0) {
-                    hasPieces = true;
+                if (board[i][j] == 1) {
+                    hasWhite = true;
+                }
+                if (board[i][j] == -1) {
+                    hasBlack = true;
                 }
             }
         }
 
-        return !hasPieces;
+        return !(hasWhite && hasBlack);
     }
 
     public interface Player {
@@ -216,9 +259,9 @@ public class GameLogic {
         // private RandomBot bot;
         private MinimaxBot bot;
 
-        public BotPlayer(int player) {
-            // this.bot = new RandomBot();
-            this.bot = new MinimaxBot(player); // Your bot logic
+        public BotPlayer(int player, GameLogic logic) {
+            // this.bot = new RandomBot(player, screen);
+            this.bot = new MinimaxBot(player, screen, logic);
         }
 
         @Override
