@@ -30,10 +30,9 @@ public class GameLogic {
     public void handleInput() {
         if (isGameOver(board) && !screen.getPause()) {
             ((Game) Gdx.app.getApplicationListener()).setScreen(new GameOver(screen.getGame(), -currentPlayer));
-        } else if (isDraw(screen.getHistory()) && !screen.getPause()){
+        } else if (isDraw(screen.getHistory()) && !screen.getPause()) {
             ((Game) Gdx.app.getApplicationListener()).setScreen(new GameOver(screen.getGame(), 0));
-        }
-        else {
+        } else {
             getCurrentPlayer().takeTurn(this);
         }
     }
@@ -225,11 +224,19 @@ public class GameLogic {
             if (Gdx.input.justTouched()) {
                 int mouseX = Gdx.input.getX();
                 int mouseY = Gdx.input.getY();
-                int clickedCol = mouseX / GameScreen.TILE_SIZE;
-                int clickedRow = (Gdx.graphics.getHeight() - mouseY) / GameScreen.TILE_SIZE;
 
-                if (clickedRow >= 0 && clickedRow < GameScreen.BOARD_SIZE && clickedCol >= 0
-                        && clickedCol < GameScreen.BOARD_SIZE) {
+                int adjustedMouseX = mouseX - GameScreen.X_OFFSET;
+                int adjustedMouseY = (Gdx.graphics.getHeight() - mouseY) - GameScreen.Y_OFFSET;
+
+                int clickedCol = (adjustedMouseX / GameScreen.TILE_SIZE);
+                int clickedRow = (adjustedMouseY / GameScreen.TILE_SIZE);
+
+                if (adjustedMouseX >= 0 &&
+                        adjustedMouseY >= 0 &&
+                        clickedRow >= 0 &&
+                        clickedRow < GameScreen.BOARD_SIZE &&
+                        clickedCol >= 0 &&
+                        clickedCol < GameScreen.BOARD_SIZE) {
                     screen.togglePause(false);
                     if (!game.pieceSelected) {
                         if (game.board[clickedRow][clickedCol] == game.currentPlayer) {

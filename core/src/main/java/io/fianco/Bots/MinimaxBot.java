@@ -8,9 +8,9 @@ import io.fianco.GameScreen;
 import io.fianco.ZobristHashing;
 
 public class MinimaxBot extends Bot {
-    private int depth = 3;
     private ZobristHashing zobirst;
     private TranspositionTable transpositionTable;
+    private long timeLimitMillis = 3000;
 
     private class BestMove {
         int[] move;
@@ -35,19 +35,29 @@ public class MinimaxBot extends Bot {
     @Override
     public int[] makeBotMove(int[][] board) {
         long initialHash = zobirst.computeHash(board);
-        BestMove bestMove = negaMax(board, this.depth, -99999, 99999, player, zobirst, initialHash, transpositionTable);
+        long startTime = System.currentTimeMillis();
+        BestMove bestMove = null;
 
-        System.out.println();
-        System.out.println(" Score: " + bestMove.score + " (" + bestMove.move[0] + ", " + bestMove.move[1] + ") " + "("
+        System.out.println("Thinking...");
+
+        int depth = 1;
+        while (System.currentTimeMillis() - startTime < timeLimitMillis) {
+            // Do negamax
+            bestMove = negaMax(board, depth, -99999, 99999, player, zobirst, initialHash, transpositionTable);
+            depth++;
+        }
+
+        System.out.println("Score: " + bestMove.score + " || Move: (" + bestMove.move[0] + ", " + bestMove.move[1] + ") " + "("
                 + bestMove.move[2] + ", "
-                + bestMove.move[3] + ")");
+                + bestMove.move[3] + ")" + " || Time: " + (System.currentTimeMillis() - startTime));
+        System.out.println();
 
         return bestMove.move;
     }
 
     private BestMove negaMax(int[][] board, int depth, int a, int b, int currentPlayer, ZobristHashing zobrist,
             long zobristHash, TranspositionTable transTable) {
-        int alphaOrig = a; // Original alpha for to get flag
+        int a0 = a;
         int maxScore = Integer.MIN_VALUE;
         int[] bestMove = null;
 
@@ -56,15 +66,19 @@ public class MinimaxBot extends Bot {
         // If entry is found at same or deeper depth we reuse computation
         if (entry != null && entry.depth >= depth) {
             if (entry.flag == TranspositionTable.EXACT) {
-                return new BestMove(entry.bestMove, entry.score); // Return cached exact score
+                // Return cached exact score
+                return new BestMove(entry.bestMove, entry.score); 
             } else if (entry.flag == TranspositionTable.LOWER_BOUND) {
-                a = Math.max(a, entry.score); // New lower bound
+                // New lower bound
+                a = Math.max(a, entry.score); 
             } else if (entry.flag == TranspositionTable.UPPER_BOUND) {
-                b = Math.min(b, entry.score); // New upper bound
+                // New upper bound
+                b = Math.min(b, entry.score); 
             }
 
+            // Check Beta cutoff
             if (a >= b) {
-                return new BestMove(null, entry.score); // Prune
+                return new BestMove(null, entry.score);
             }
         }
 
@@ -85,8 +99,7 @@ public class MinimaxBot extends Bot {
 
             // Simulate the move and update the Zobrist hash
             simulateMove(newBoard, move[0], move[1], move[2], move[3]);
-            // Update zobristhash for new board state (player 1 = pieceType 0, player -1 =
-            // pieceType 1)
+            // Update zobristhash for new board state (p 1 = pt 0, p -1 = pt 1)
             long newZobristHash = zobrist.updateHash(zobristHash, move[0], move[1], move[2], move[3],
                     currentPlayer == 1 ? 0 : 1);
 
@@ -94,10 +107,10 @@ public class MinimaxBot extends Bot {
             BestMove res = negaMax(newBoard, depth - 1, -b, -a, -currentPlayer, zobrist, newZobristHash, transTable);
             res.negate();
 
-            // Update score if its new max
+            // Update score and best move if its new max
             if (res.score > maxScore) {
                 maxScore = res.score;
-                bestMove = move; // Update best move
+                bestMove = move;
             }
 
             // Update alpha
@@ -111,14 +124,11 @@ public class MinimaxBot extends Bot {
         // Store the result in the transposition table
         int flag;
         // Determine flag
-        if (maxScore <= alphaOrig) {
-            // Upper bound (beta cutoff)
+        if (maxScore <= a0) {
             flag = TranspositionTable.UPPER_BOUND;
         } else if (maxScore >= b) {
-            // Lower bound (alpha cutoff)
             flag = TranspositionTable.LOWER_BOUND;
         } else {
-            // Exact score
             flag = TranspositionTable.EXACT;
         }
         transTable.storeEntry(zobristHash, depth, maxScore, flag, bestMove);
@@ -127,7 +137,7 @@ public class MinimaxBot extends Bot {
     }
 
     private int evaluate(int[][] board, int currentPlayer, int possibleMoves) {
-        if (logic.isDraw(game.getHistory())){
+        if (logic.isDraw(game.getHistory())) {
             return -5000;
         }
 
@@ -139,7 +149,8 @@ public class MinimaxBot extends Bot {
         int furthestPlayerMinus1Row = board.length - 1;
 
         Random rand = new Random();
-        int randomFactor = rand.nextInt(5) - 2;
+        // Added random Factor
+        int randomFactor = rand.nextInt(11) - 5;
 
         for (int i = 0; i < board.length; i++) {
             for (int j = 0; j < board.length; j++) {
@@ -156,8 +167,10 @@ public class MinimaxBot extends Bot {
         }
 
         if (this.isCapture)
+            // Give each possible capture a score of 2
             captureScore += 2 * possibleMoves;
 
+        // difference between who is furthest onf the board
         progressScore = furthestPlayer1Row - (board.length - 1 -
                 furthestPlayerMinus1Row);
 
@@ -166,7 +179,6 @@ public class MinimaxBot extends Bot {
                 + randomFactor;
         return finalScore;
     }
-
 
     // Deep copy array
     private int[][] copyBoard(int[][] board) {
@@ -186,7 +198,7 @@ public class MinimaxBot extends Bot {
             int jumpedRow = (startRow + endRow) / 2;
             int jumpedCol = (startCol + endCol) / 2;
             // Remove the captured piece
-            board[jumpedRow][jumpedCol] = 0; 
+            board[jumpedRow][jumpedCol] = 0;
         }
     }
 

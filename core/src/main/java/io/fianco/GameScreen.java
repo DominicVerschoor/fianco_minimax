@@ -13,7 +13,6 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
-import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 public class GameScreen implements Screen {
@@ -27,11 +26,13 @@ public class GameScreen implements Screen {
     private boolean isPaused;
 
     private Texture blackTile, whiteTile, whitePiece, blackPiece;
-    private TextButton back, forward, pause;
+    private TextButton back, forward, pause, begin, end;
     private GameLogic logic;
 
     public static final int BOARD_SIZE = 9;
-    public static final int TILE_SIZE = 64;
+    public static final int TILE_SIZE = 66;
+    public static final int Y_OFFSET = 95;
+    public static final int X_OFFSET = 95;
 
     public int[][] board = {
             { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
@@ -44,18 +45,6 @@ public class GameScreen implements Screen {
             { 0, -1, 0, 0, 0, 0, 0, -1, 0 },
             { -1, -1, -1, -1, -1, -1, -1, -1, -1 },
     };
-
-    // public int[][] board = {
-    // { 0, 0, 0, 1, 0, 0, 0, 0, 0 },
-    // { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-    // { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-    // { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-    // { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-    // { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-    // { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-    // { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-    // { 0, 0, 0, 0, 0, 0, 0, 0, -1 },
-    // };
 
     public GameScreen(Main game, boolean isHuman1, boolean isHuman2) {
         this.game = game;
@@ -83,36 +72,48 @@ public class GameScreen implements Screen {
         createButtons();
 
         // Add buttons to the stage
+        stage.addActor(begin);
         stage.addActor(back);
         stage.addActor(pause);
         stage.addActor(forward);
+        stage.addActor(end);
     }
 
     private void createButtons() {
+        begin = new TextButton("<<", skin);
         back = new TextButton("<", skin);
         forward = new TextButton(">", skin);
         pause = new TextButton("||", skin);
-        // Set positions and sizes for the buttons (relative to window size)
-        back.setPosition(Gdx.graphics.getWidth() * 0.72f, Gdx.graphics.getHeight() * 0.01f); // 10% from left, 50% from
-        // bottom
-        back.setSize(Gdx.graphics.getWidth() * 0.08f, Gdx.graphics.getHeight() * 0.111f); // Button width=35%, height=8%
+        end = new TextButton(">>", skin);
 
-        // Set positions and sizes for the buttons (relative to window size)
-        pause.setPosition(Gdx.graphics.getWidth() * 0.82f, Gdx.graphics.getHeight() * 0.01f); // 10% from left, 50% from
-        // bottom
-        pause.setSize(Gdx.graphics.getWidth() * 0.08f, Gdx.graphics.getHeight() * 0.111f); // Button width=35%,
-                                                                                           // height=8%
+        begin.setPosition(Gdx.graphics.getWidth() * 0.23f, Gdx.graphics.getHeight() * 0.01f);
+        begin.setSize(Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.111f);
 
-        // Set positions and sizes for the buttons (relative to window size)
-        forward.setPosition(Gdx.graphics.getWidth() * 0.92f, Gdx.graphics.getHeight() * 0.01f); // 10% from left, 50%
-        // from bottom
-        forward.setSize(Gdx.graphics.getWidth() * 0.08f, Gdx.graphics.getHeight() * 0.111f); // Button width=35%,
-        // height=8%
+        back.setPosition(Gdx.graphics.getWidth() * 0.35f, Gdx.graphics.getHeight() * 0.01f);
+        back.setSize(Gdx.graphics.getWidth() * 0.08f, Gdx.graphics.getHeight() * 0.111f);
+
+        pause.setPosition(Gdx.graphics.getWidth() * 0.45f, Gdx.graphics.getHeight() * 0.01f);
+        pause.setSize(Gdx.graphics.getWidth() * 0.08f, Gdx.graphics.getHeight() * 0.111f);
+
+        forward.setPosition(Gdx.graphics.getWidth() * 0.55f, Gdx.graphics.getHeight() * 0.01f);
+        forward.setSize(Gdx.graphics.getWidth() * 0.08f, Gdx.graphics.getHeight() * 0.111f);
+
+        end.setPosition(Gdx.graphics.getWidth() * 0.65f, Gdx.graphics.getHeight() * 0.01f);
+        end.setSize(Gdx.graphics.getWidth() * 0.1f, Gdx.graphics.getHeight() * 0.111f);
+
+        begin.addListener(event -> {
+            if (event.toString().equals("touchDown")) {
+                togglePause(true);
+                setBoard(0);
+                return true;
+            }
+            return false;
+        });
 
         back.addListener(event -> {
             if (event.toString().equals("touchDown")) {
                 togglePause(true);
-                setBoard(true);
+                setBoard(1);
                 return true;
             }
             return false;
@@ -121,7 +122,16 @@ public class GameScreen implements Screen {
         forward.addListener(event -> {
             if (event.toString().equals("touchDown")) {
                 togglePause(true);
-                setBoard(false);
+                setBoard(2);
+                return true;
+            }
+            return false;
+        });
+
+        end.addListener(event -> {
+            if (event.toString().equals("touchDown")) {
+                togglePause(true);
+                setBoard(3);
                 return true;
             }
             return false;
@@ -144,8 +154,17 @@ public class GameScreen implements Screen {
             pause.setText("||");
     }
 
-    public void setBoard(boolean back) {
-        if (back) {
+    public void setBoard(int button) {
+        if (button == 0) {
+            if (boardState > 0) {
+                boardState = 0;
+                // Set the board to the next state using a copy
+                int[][] nextState = copyBoard(history.get(boardState));
+                logic.setCurrentPlayer(-logic.getPlayer());
+                this.board = nextState;
+                logic.setBoard(nextState);
+            }
+        } else if (button == 1) {
             if (boardState > 0) {
                 boardState--;
                 // Set the board to the previous state using a copy
@@ -154,9 +173,18 @@ public class GameScreen implements Screen {
                 this.board = previousState;
                 logic.setBoard(previousState);
             }
-        } else {
+        } else if (button == 2) {
             if (boardState < history.size() - 1) {
                 boardState++;
+                // Set the board to the next state using a copy
+                int[][] nextState = copyBoard(history.get(boardState));
+                logic.setCurrentPlayer(-logic.getPlayer());
+                this.board = nextState;
+                logic.setBoard(nextState);
+            }
+        } else if (button == 3) {
+            if (boardState < history.size() - 1) {
+                boardState = history.size() - 1;
                 // Set the board to the next state using a copy
                 int[][] nextState = copyBoard(history.get(boardState));
                 logic.setCurrentPlayer(-logic.getPlayer());
@@ -170,11 +198,11 @@ public class GameScreen implements Screen {
         return this.isPaused;
     }
 
-    public Main getGame(){
+    public Main getGame() {
         return this.game;
     }
 
-    public List<int[][]> getHistory(){
+    public List<int[][]> getHistory() {
         return history;
     }
 
@@ -205,36 +233,16 @@ public class GameScreen implements Screen {
         // Clear screen with white color
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-        ScreenUtils.clear(1, 1, 1, 1);
 
         batch.begin();
         drawBoard();
         drawPieces();
         batch.end();
 
-        // Draw the UI on the right half of the screen
         stage.act(delta);
         stage.draw();
 
         logic.handleInput();
-    }
-
-    @Override
-    public void resize(int width, int height) {
-        // Update button positions based on the new window size
-        stage.getViewport().update(width, height, true); // Ensure the stage resizes properly
-    }
-
-    @Override
-    public void pause() {
-    }
-
-    @Override
-    public void resume() {
-    }
-
-    @Override
-    public void hide() {
     }
 
     private void drawBoard() {
@@ -242,7 +250,7 @@ public class GameScreen implements Screen {
         for (int row = 0; row < BOARD_SIZE; row++) {
             for (int col = 0; col < BOARD_SIZE; col++) {
                 Texture tile = (row + col) % 2 == 0 ? whiteTile : blackTile;
-                batch.draw(tile, col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                batch.draw(tile, col * TILE_SIZE + X_OFFSET, row * TILE_SIZE + Y_OFFSET, TILE_SIZE, TILE_SIZE);
 
                 // Draw the cell ID (row, col) in the top-left corner of each tile
                 String cellId = convertToCoordinate(row, col);
@@ -250,8 +258,8 @@ public class GameScreen implements Screen {
                 font.getData().setScale(1); // Adjust the scale of the font if needed
 
                 // Adjust the position where the text is drawn so it fits in the top-left corner
-                float textX = col * TILE_SIZE + 5; // Offset by 5 pixels to add a small margin
-                float textY = (row + 1) * TILE_SIZE - 5; // Adjust to the top of the tile
+                float textX = col * TILE_SIZE + 5 + X_OFFSET;
+                float textY = (row + 1) * TILE_SIZE - 5 + Y_OFFSET;
                 font.draw(batch, cellId, textX, textY);
             }
         }
@@ -262,8 +270,8 @@ public class GameScreen implements Screen {
         for (int row = 0; row < BOARD_SIZE; row++) {
             for (int col = 0; col < BOARD_SIZE; col++) {
                 float pieceSize = TILE_SIZE * 0.8f;
-                float pieceX = col * TILE_SIZE + (TILE_SIZE - pieceSize) / 2; // Center piece on tile
-                float pieceY = row * TILE_SIZE + (TILE_SIZE - pieceSize) / 2; // Center piece on tile
+                float pieceX = col * TILE_SIZE + (TILE_SIZE - pieceSize) / 2 + X_OFFSET;
+                float pieceY = row * TILE_SIZE + (TILE_SIZE - pieceSize) / 2 + Y_OFFSET;
                 if (board[row][col] == 1) {
                     // Draw white piece
                     batch.draw(whitePiece, pieceX, pieceY, pieceSize, pieceSize);
@@ -284,6 +292,22 @@ public class GameScreen implements Screen {
 
         // Return the coordinate as a string
         return String.valueOf(column) + row;
+    }
+    
+    @Override
+    public void resize(int width, int height) {
+    }
+
+    @Override
+    public void pause() {
+    }
+
+    @Override
+    public void resume() {
+    }
+
+    @Override
+    public void hide() {
     }
 
     @Override

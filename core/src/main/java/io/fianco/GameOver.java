@@ -34,24 +34,37 @@ public class GameOver extends ScreenAdapter {
     }
 
     private void mainMenuDisplay() {
+        float windowWidth = Gdx.graphics.getWidth();
+        float windowHeight = Gdx.graphics.getHeight();
+        float buttonHeight = 0.13f;
+        float buttonWidth = 0.35f;
+
         // Create the title label
         if (this.winner == 1){
             titleLabel = new Label("White Wins!", skin);
+            titleLabel.setPosition(windowWidth * 0.3f, windowHeight * 0.85f); 
+            titleLabel.setSize(windowWidth * 0.8f, windowHeight * 0.1f);
         } else if (this.winner == -1) {
             titleLabel = new Label("Black Wins!", skin);
+            titleLabel.setPosition(windowWidth * 0.32f, windowHeight * 0.85f); 
+            titleLabel.setSize(windowWidth * 0.8f, windowHeight * 0.1f);
         } else{
             titleLabel = new Label("Draw!", skin);
+            titleLabel.setPosition(windowWidth * 0.4f, windowHeight * 0.85f); 
+            titleLabel.setSize(windowWidth * 0.8f, windowHeight * 0.1f);
         }
         
         titleLabel.setFontScale(2); // Set font scale for the title
 
         // Create buttons
         homeButton = new TextButton("Home", skin);
-        
 
         // Add all elements to the stage (without setting position here)
         stage.addActor(titleLabel);
         stage.addActor(homeButton);
+
+        homeButton.setPosition(windowWidth * 0.33f, windowHeight * 0.2f); 
+        homeButton.setSize(windowWidth * buttonWidth, windowHeight * buttonHeight); 
 
         // Button click listeners
         homeButton.addListener(event -> {
@@ -61,21 +74,6 @@ public class GameOver extends ScreenAdapter {
             }
             return false;
         });
-
-        // Set the initial positions and sizes based on the current window size
-        updateUIPositions(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-    }
-
-    private void updateUIPositions(float windowWidth, float windowHeight) {
-        float buttonHeight = 0.13f;
-        float buttonWidth = 0.35f;
-
-        // Set position and size for the title label
-        titleLabel.setPosition(windowWidth * 0.35f, windowHeight * 0.85f); // Start at 10% from left, 15% from top
-        titleLabel.setSize(windowWidth * 0.8f, windowHeight * 0.1f); // 80% width and 10% height of window size
-
-        homeButton.setPosition(windowWidth * 0.33f, windowHeight * 0.2f); // 35% from left, 20% from bottom
-        homeButton.setSize(windowWidth * buttonWidth, windowHeight * buttonHeight); // Button width=30%, height=10%
     }
 
     @Override
@@ -97,7 +95,6 @@ public class GameOver extends ScreenAdapter {
 
     @Override
     public void resize(int width, int height) {
-        updateUIPositions(width, height);
     }
 
     @Override
